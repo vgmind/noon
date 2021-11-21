@@ -4,7 +4,7 @@
 // Created by Paul Reeves 2021 (November)
 // https://github.com/vgmind/noon
 //
-// A single header file so add this define before ONE include. 
+// A single header file so add this define before ONE include.
 // #define NOON_IMPLEMENTATION
 // #include "noon.h"
 //
@@ -12,12 +12,13 @@
 //
 // Release 1.0 (November 2021)
 //   - Initial release
+//   - Only tested on Linux.
 //
-// Noon was slight inspired but 1am a lisp testing frame
+// Noon was slight inspired but 1am, a lisp testing frame
 // https://github.com/lmj/1am and is aimed at small projects. If you expect to
-// have a hundred thousand tests this minimal tests if not for you. Although if
-// you are just getting going and want a no hassle single header test runner
-// that this might just be for you. Noon is very minimal.
+// have a hundred thousand tests this minimal test framework is not for you.
+// Although if you are just getting going and want a no hassle single header
+// test runner that this might just be for you. Noon is very minimal.
 //
 // At the moment this is very much a personal project and while I consider the
 // project fairly minimal in terms of code we do:
@@ -30,8 +31,8 @@
 // your test builds.
 //
 // I haven't been able to figure out a nice alternative to exceptions, Result
-// like objects just didn't feel right in C++ and with special syntax they can
-// be a burden when returning from nested functions.
+// like objects just didn't feel right in C++ and without special syntax they
+// can be a burden to use.
 //
 // Take a look at example.cpp for a couple of simple examples.
 //
@@ -52,10 +53,10 @@
 //
 // Details:
 //
-// There really is not much to say here. As you construct each test the
-// constructor for the struct adds itself to a linked list of tests.
+// There really is not much to say here. As each test constructs the test
+// itself to a linked list of tests.
 //
-// The root of this is a static variable inside the Test struct.
+// The root of this is a static member variable inside the Test struct.
 //
 // The runner just walks the list calling the function pointers.
 //
