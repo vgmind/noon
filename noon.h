@@ -13,6 +13,10 @@
 // Release 1.0 (November 2021)
 //   - Initial release
 //   - Only tested on Linux.
+// Release 1.1 (November 2021)
+//   - Turn off tests by defining NOON_NO_REST
+//   - Macro to run tests RUN_TESTS
+//   - Test::run_named to run an individual named tests
 //
 // Noon was slight inspired but 1am, a lisp testing frame
 // https://github.com/lmj/1am and is aimed at small projects. If you expect to
@@ -62,32 +66,35 @@
 //
 #include <cstdio>
 #include <cstdlib>
-
+#include <cstring>
 using Test_fn = void (*)();
 
-struct Test {
+class Test {
+  static bool run_test(Test *test, int num_run) {
+    printf("(%i) %s", num_run, test->name ? test->name : "Anonymous Test");
+    try {
+      test->fn();
+      puts("👍");
+    } catch (char const *msg) {
+      puts("");
+      fflush(stdout);
+      fprintf(stderr, "❌ Test: %s failed, msg: %s❌\n", test->name, msg);
+      fflush(stderr);
+      return false;
+    }
+    return true;
+  }
+
+public:
   static Test *start; // Our global
 
   static void run(const bool abort_if_any_failures = false) {
-
     puts("Testing");
     int num_run{0};
     int num_failed{0};
     for (auto t = start; t; t = t->next) {
       ++num_run;
-      printf("(%i) %s", num_run, t->name ? t->name : "Anonymous Test");
-      try {
-        t->fn();
-        puts("👍");
-      } catch (char const *msg) {
-        puts("");
-        fflush(stdout);
-        fprintf(stderr, "❌ Test: %s failed, msg: %s❌\n", t->name, msg);
-        fprintf(stderr, "❌ File: %s Line: %i ❌\n", t->file_name,
-                t->line_number);
-        fflush(stderr);
-        ++num_failed;
-      }
+      num_failed = run_test(t, num_run) ? 0 : 1;
     }
 
     float pct_failed = 100.0f * num_failed / num_run;
@@ -104,6 +111,19 @@ struct Test {
     if (abort_if_any_failures) {
       puts("Exiting");
       exit(EXIT_FAILURE);
+    }
+  }
+
+  static void run_named(char const *name) {
+    auto t = start;
+    while (t && strcmp(name, t->name))
+      t = t->next;
+
+    if (t) {
+      run_test(t, 1);
+    } else {
+      fprintf(stderr, "❌ Can not find test %s❌\n", t->name);
+      fflush(stderr);
     }
   }
 
@@ -130,6 +150,18 @@ struct Test {
 #if defined NOON_IMPLEMENTATION
 Test *Test::start; // allocate space for static
 #endif
+
+#if defined(NOON_NO_TEST)
+// Null out the tests
+//
+//
+#define TEST(expr)
+#define TEST_NAMED(name, body)
+#define RUN_TESTS(exit_on_error)
+
+#else
+
+// Define the tests
 #define TEST_NAMED(name, body)                                                 \
   void name();                                                                 \
   static Test test_##name(#name, &name, __FILE__, __LINE__);                   \
@@ -156,6 +188,8 @@ Test *Test::start; // allocate space for static
       throw msg " " NOON_AT;                                                   \
   } while (false)
 
+#define RUN_TESTS(exit_on_error) Test::run(exit_on_error)
+
 //
 // On by default, mostly because I use them...
 #if !defined(TEST_NO_LOWERCASE)
@@ -165,4 +199,5 @@ Test *Test::start; // allocate space for static
 #define check_message CHECK_MESSAGE
 #endif
 
+#endif
 #endif // NOON_H_
